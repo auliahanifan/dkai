@@ -1,4 +1,5 @@
 import { CheckCircle2, Info, ShieldCheck, X } from 'lucide-react';
+import { useEffect } from 'react';
 import { formatIdrFull, formatNumber } from '../lib/formatters';
 import type { DataQualityReport } from '../lib/salesAnalytics';
 
@@ -10,6 +11,17 @@ interface DataQualityModalProps {
 }
 
 export function DataQualityModal({ open, onClose, quality, fileName }: DataQualityModalProps) {
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
@@ -26,7 +38,7 @@ export function DataQualityModal({ open, onClose, quality, fileName }: DataQuali
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
               <ShieldCheck className="h-5 w-5" />
             </span>
             <div>
@@ -66,7 +78,7 @@ export function DataQualityModal({ open, onClose, quality, fileName }: DataQuali
               </div>
             </div>
             <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-3">
-              <div className="text-[11px] font-semibold text-slate-500">Spasi Dirapikan</div>
+              <div className="text-[11px] font-semibold text-slate-500">Baris Dirapikan Spasi</div>
               <div className="mt-1 text-lg font-extrabold text-slate-900 tabular-nums">
                 {formatNumber(quality.trimmedRowsCount)}
               </div>
@@ -82,7 +94,7 @@ export function DataQualityModal({ open, onClose, quality, fileName }: DataQuali
           {/* Region Normalizations */}
           <div className="rounded-xl border border-slate-200/80 p-4">
             <div className="flex items-center gap-2 font-bold text-slate-800">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <CheckCircle2 className="h-4 w-4 text-teal-600" />
               <span>Normalisasi Nama Region</span>
             </div>
             {quality.regionNormalizations.length === 0 ? (
@@ -101,7 +113,7 @@ export function DataQualityModal({ open, onClose, quality, fileName }: DataQuali
                         {item.from}
                       </code>{' '}
                       →{' '}
-                      <code className="rounded bg-emerald-50 px-1.5 py-0.5 font-mono text-emerald-700">
+                      <code className="rounded bg-teal-50 px-1.5 py-0.5 font-mono text-teal-800">
                         {item.to}
                       </code>
                     </span>
@@ -117,7 +129,7 @@ export function DataQualityModal({ open, onClose, quality, fileName }: DataQuali
           {/* Duplicates Removed */}
           <div className="rounded-xl border border-slate-200/80 p-4">
             <div className="flex items-center gap-2 font-bold text-slate-800">
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <CheckCircle2 className="h-4 w-4 text-teal-600" />
               <span>Penghapusan Baris Duplikat Identik</span>
             </div>
             {quality.duplicatesRemoved.length === 0 ? (
@@ -155,8 +167,8 @@ export function DataQualityModal({ open, onClose, quality, fileName }: DataQuali
                 <strong className="text-rose-700 tabular-nums">
                   {formatIdrFull(quality.returnNetSalesIdr)}
                 </strong>
-                . Sesuai aturan, retur tetap dihitung mengurangi Net Sales agar angka akhir mencerminkan
-                penjualan bersih aktual.
+                . Sesuai kaidah komersial, retur tetap mengurangi Net Sales agar angka akhir
+                mencerminkan penjualan bersih aktual.
               </p>
             </div>
 
@@ -179,6 +191,10 @@ export function DataQualityModal({ open, onClose, quality, fileName }: DataQuali
               </p>
             </div>
           </div>
+
+          <p className="text-right text-[11px] text-slate-400">
+            Tekan <kbd className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> untuk menutup
+          </p>
         </div>
       </div>
     </div>
