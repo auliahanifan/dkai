@@ -12,6 +12,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataQualityModal } from './components/DataQualityModal';
 import { KpiStrip } from './components/KpiStrip';
+import { OutletDetailDrawer } from './components/OutletDetailDrawer';
 import { RegionBrandMatrix } from './components/RegionBrandMatrix';
 import { SalesBarChartCard } from './components/SalesBarChartCard';
 import { SalesTrendCard } from './components/SalesTrendCard';
@@ -20,7 +21,9 @@ import { WeakestOutletsCard } from './components/WeakestOutletsCard';
 import { formatDateRange, formatMonthKey, formatNumber } from './lib/formatters';
 import {
   computeCrossFilterDashboard,
+  computeDashboardMetrics,
   parseAndCleanSalesCsv,
+  type OutletPerformance,
   type ParsedSalesDataset,
   type SalesFilters,
 } from './lib/salesAnalytics';
@@ -48,6 +51,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<SalesFilters>(INITIAL_FILTERS);
   const [dqOpen, setDqOpen] = useState<boolean>(false);
+  const [selectedOutletId, setSelectedOutletId] = useState<string | null>(null);
   const [isDraggingCsv, setIsDraggingCsv] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,6 +189,15 @@ export function App() {
   }, [dataset, filters]);
 
   const metrics = crossFilter?.metrics ?? null;
+
+  const selectedOutlet = useMemo<OutletPerformance | null>(() => {
+    if (!selectedOutletId || !dataset || !metrics) return null;
+    const inCurrent = metrics.allOutlets.find((o) => o.outletId === selectedOutletId);
+    if (inCurrent) return inCurrent;
+    // Fallback for dormant outlets not active in the current date window
+    const full = computeDashboardMetrics(dataset.records, { allRecords: dataset.records });
+    return full.allOutlets.find((o) => o.outletId === selectedOutletId) ?? null;
+  }, [selectedOutletId, dataset, metrics]);
 
   const activeChips = useMemo(() => {
     if (!dataset) return [];
@@ -581,14 +594,14 @@ export function App() {
               }
             />
 
-            {/* Bottom 5 Weakest Outlets */}
-            <div id="weakest-outlets">
-              <WeakestOutletsCard
-                outlets={metrics.weakestOutlets}
-                avgSalesPerOutletIdr={metrics.totals.avgSalesPerOutletIdr}
-                totalActiveOutlets={metrics.allOutletsCount}
-              />
-            </div>
+            {/* Bottom 5 Weakest Outlets + Commercial Churn Radar */}
+            <WeakestOutletsCard
+              outlets={metrics.weakestOutlets}
+              dormantOutlets={metrics.dormantOutlets}
+              totalActiveOutlets={metrics.allOutletsCount}
+              onSelectOutlet={(outlet) => setSelectedOutletId(outlet.outletId)}
+              onSelectDormantOutlet={(outletId) => setSelectedOutletId(outletId)}
+            />
           </>
         )}
       </main>
@@ -599,12 +612,19 @@ export function App() {
       </footer>
 
       {dataset && (
-        <DataQualityModal
-          open={dqOpen}
-          onClose={() => setDqOpen(false)}
-          quality={dataset.quality}
-          fileName={fileName}
-        />
+        <>
+          <DataQualityModal
+            open={dqOpen}
+            onClose={() => setDqOpen(false)}
+            quality={dataset.quality}
+            fileName={fileName}
+          />
+          <OutletDetailDrawer
+            outlet={selectedOutlet}
+            allBrands={dataset.availableBrands}
+            onClose={() => setSelectedOutletId(null)}
+          />
+        </>
       )}
     </div>
   );
