@@ -542,19 +542,19 @@ export function App() {
               onSelectChannel={(outletType) => setFilters((f) => ({ ...f, outletType }))}
             />
 
-            {/* Region & Brand Charts */}
+            {/* Region & Brand Charts (Non-Collapsing Cross-Filter) */}
             <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
               <SalesBarChartCard
                 title="Penjualan per Region"
-                subtitle="Total Net Sales IDR, kontribusi share, dan volume karton per wilayah"
+                subtitle="Total Net Sales IDR, kontribusi share, dan rata-rata per outlet tiap wilayah"
                 items={crossFilter.regionChartItems}
                 selectedName={filters.region}
                 onSelect={(region) => setFilters((f) => ({ ...f, region }))}
-                accent="crimson"
+                accent="teal"
               />
               <SalesBarChartCard
                 title="Penjualan per Brand"
-                subtitle="Total Net Sales IDR, kontribusi share, dan volume karton per lini produk"
+                subtitle="Total Net Sales IDR, kontribusi share, dan rata-rata per outlet tiap lini produk"
                 items={crossFilter.brandChartItems}
                 selectedName={filters.brand}
                 onSelect={(brand) => setFilters((f) => ({ ...f, brand }))}
@@ -567,6 +567,8 @@ export function App() {
               matrix={crossFilter.matrixData}
               selectedRegion={filters.region}
               selectedBrand={filters.brand}
+              onSelectRegion={(region) => setFilters((f) => ({ ...f, region }))}
+              onSelectBrand={(brand) => setFilters((f) => ({ ...f, brand }))}
               onSelectCell={(region, brand) =>
                 setFilters((f) => {
                   const isSame = f.region === region && f.brand === brand;
