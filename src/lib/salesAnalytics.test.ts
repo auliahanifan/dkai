@@ -130,7 +130,7 @@ describe('parseAndCleanSalesCsv on real sales.csv', () => {
     expect(metrics.byRegion[0].name).toBe('Kalimantan');
   });
 
-  it('generates a single-paragraph Telegram summary using native Telegram **bold** syntax and tone presets', () => {
+  it('generates scannable multi-line Telegram summaries and a compact 1-paragraph mode using native **bold**', () => {
     const filters = {
       startDate: dataset.minDate,
       endDate: dataset.maxDate,
@@ -139,28 +139,31 @@ describe('parseAndCleanSalesCsv on real sales.csv', () => {
       outletType: 'ALL',
     };
     const metrics = computeDashboardMetrics(dataset.records, { allRecords: dataset.records });
-    const plain = generateTelegramSummary(metrics, filters, 'plain', 'executive');
     const mdExec = generateTelegramSummary(metrics, filters, 'markdown', 'executive');
     const mdOps = generateTelegramSummary(metrics, filters, 'markdown', 'operational');
+    const plainPara = generateTelegramSummary(metrics, filters, 'plain', 'paragraph');
 
-    expect(plain).not.toContain('\n');
-    expect(mdExec).not.toContain('\n');
-    expect(mdOps).not.toContain('\n');
-
-    expect(plain).toContain('Jabodetabek');
-    expect(plain).toContain('Kacang Dua Kelinci');
-    expect(plain).toContain('OUT1003');
-    expect(plain).toContain('OUT1045');
-    expect(plain).toContain('1,0 karton/invoice');
+    // Executive & Operational formats use readable line breaks
+    expect(mdExec).toContain('\n');
+    expect(mdOps).toContain('\n');
+    expect(mdExec).toContain('1. Toko Sinar Abadi');
+    expect(mdExec).toContain('5. Toko Anugerah');
+    expect(mdExec).toContain('**5 Outlet Terlemah:**');
 
     // Native Telegram bold uses **text**, never single *text*
-    expect(mdExec).toContain('**Jabodetabek**');
-    expect(mdExec).toContain('**5 outlet terlemah**');
-    expect(mdExec.replace(/\*\*[^*]+\*\*/g, '')).not.toContain('*');
+    expect(mdExec.replace(/\*\*[^*\n]+\*\*/g, '')).not.toContain('*');
+    expect(mdOps.replace(/\*\*[^*\n]+\*\*/g, '')).not.toContain('*');
 
-    // Operational tone adds salesman and dormant outlet context
+    // Operational tone adds salesman and dormant churn radar
     expect(mdOps).toContain('Andi');
-    expect(mdOps).toContain('3 outlet dormant');
+    expect(mdOps).toContain('Radar Churn:');
     expect(mdOps).toContain('OUT1043');
+
+    // Compact 1-paragraph mode stays strictly single paragraph
+    expect(plainPara).not.toContain('\n');
+    expect(plainPara).toContain('Jabodetabek');
+    expect(plainPara).toContain('Kacang Dua Kelinci');
+    expect(plainPara).toContain('OUT1003');
+    expect(plainPara).toContain('1,0 karton/invoice');
   });
 });

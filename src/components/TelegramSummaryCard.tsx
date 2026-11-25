@@ -16,7 +16,7 @@ function renderTelegramPreviewText(text: string, format: TelegramFormat) {
   if (format !== 'markdown') {
     return text;
   }
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  const parts = text.split(/(\*\*[^*\n]+\*\*)/g);
   return parts.map((part, idx) => {
     if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
       return (
@@ -57,8 +57,6 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
     window.setTimeout(() => setCopied(false), 2000);
   };
 
-  // Telegram share link strips markdown asterisks cleanly if plain text is shared;
-  // passing the current draft directly lets Telegram Mobile/Desktop open with prefilled text.
   const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(' ')}&text=${encodeURIComponent(draft)}`;
 
   const nowTime = new Date().toLocaleTimeString('id-ID', {
@@ -67,8 +65,7 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
   });
 
   const charCount = draft.length;
-  const readabilityLabel =
-    charCount <= 520 ? 'Ideal untuk HP' : charCount <= 750 ? 'Cukup padat' : 'Panjang';
+  const lineCount = draft.split('\n').filter((l) => l.trim().length > 0).length;
 
   return (
     <section
@@ -82,20 +79,17 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
           </div>
           <div>
             <h2 className="text-sm font-extrabold tracking-tight text-slate-900 sm:text-base">
-              Ringkasan 1 Paragraf untuk Telegram
+              Ringkasan Siap Kirim untuk Telegram
             </h2>
             <p className="text-xs text-slate-500">
-              Siap kirim ke Sales Manager · otomatis sinkron filter aktif dengan format{' '}
-              <code className="rounded bg-slate-200/70 px-1 py-0.5 font-mono text-[10px] text-slate-700">
-                **bold**
-              </code>{' '}
-              klien Telegram.
+              Format terstruktur ramah layar HP (atau mode 1 paragraf) · otomatis sinkron filter
+              aktif.
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Tone preset */}
+          {/* Tone / Layout preset */}
           <div
             className="inline-flex rounded-xl bg-slate-200/70 p-0.5 text-[11px] font-semibold"
             role="group"
@@ -122,6 +116,17 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
               }`}
             >
               Operasional
+            </button>
+            <button
+              type="button"
+              onClick={() => setTone('paragraph')}
+              className={`rounded-[10px] px-2.5 py-1.5 transition-colors ${
+                tone === 'paragraph'
+                  ? 'bg-white text-slate-900 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              1 Paragraf
             </button>
           </div>
 
@@ -189,27 +194,17 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
 
       <div className="grid grid-cols-1 gap-5 p-5 lg:grid-cols-12">
         {/* Editable Textarea */}
-        <div className="flex flex-col lg:col-span-7">
+        <div className="flex flex-col lg:col-span-6">
           <div className="mb-2 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-700">Editor Draft</span>
               {isEdited && (
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                  Diedit manual
-                </span>
+                <span className="text-[11px] font-semibold text-amber-700">· Diedit manual</span>
               )}
             </div>
             <div className="flex items-center gap-2.5 text-[11px] tabular-nums">
-              <span
-                className={`font-semibold ${
-                  charCount <= 520
-                    ? 'text-emerald-700'
-                    : charCount <= 750
-                      ? 'text-amber-700'
-                      : 'text-rose-700'
-                }`}
-              >
-                {charCount} kar · {readabilityLabel}
+              <span className="font-medium text-slate-500">
+                {lineCount} baris · {charCount} kar
               </span>
               {isEdited && (
                 <button
@@ -232,20 +227,20 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
               setDraft(e.target.value);
               setIsEdited(e.target.value !== autoText);
             }}
-            rows={5}
-            aria-label="Ringkasan satu paragraf untuk Telegram"
-            className="w-full flex-1 resize-y rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 text-[13px] leading-relaxed text-slate-800 outline-none transition focus:border-[#229ED9] focus:bg-white focus:ring-2 focus:ring-[#229ED9]/20"
+            rows={12}
+            aria-label="Ringkasan untuk Telegram"
+            className="w-full flex-1 resize-y rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 font-mono text-[12px] leading-relaxed text-slate-800 outline-none transition focus:border-[#229ED9] focus:bg-white focus:ring-2 focus:ring-[#229ED9]/20"
           />
           <p className="mt-2 text-[11px] text-slate-500">
-            Tips: Pilih mode <strong className="font-semibold text-slate-700">Ringkas</strong> untuk
-            update cepat di grup pimpinan, atau{' '}
-            <strong className="font-semibold text-slate-700">Operasional</strong> untuk menyertakan
-            nama salesman &amp; outlet dormant.
+            Tips: <strong className="font-semibold text-slate-700">Ringkas</strong> paling nyaman
+            dibaca cepat di Telegram, <strong className="font-semibold text-slate-700">Operasional</strong>{' '}
+            menambahkan salesman &amp; radar churn, atau pilih{' '}
+            <strong className="font-semibold text-slate-700">1 Paragraf</strong> untuk format padat.
           </p>
         </div>
 
         {/* Mobile Telegram Chat Preview */}
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-6">
           <div className="mb-2 flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-700">Pratinjau Klien Telegram</span>
             <span className="text-[11px] text-slate-400">Simulasi layar mobile</span>
@@ -266,9 +261,11 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
 
             {/* Chat Bubble Area */}
             <div className="p-3.5">
-              <div className="ml-auto max-w-[97%] rounded-2xl rounded-br-sm bg-[#EFFDDE] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-slate-800 shadow-xs ring-1 ring-emerald-900/5">
-                <p className="break-words">{renderTelegramPreviewText(draft, format)}</p>
-                <div className="mt-1.5 flex items-center justify-end gap-1 text-[10px] text-emerald-700/80 tabular-nums">
+              <div className="ml-auto max-w-[97%] rounded-2xl rounded-br-sm bg-[#EFFDDE] px-4 py-3 text-[12.5px] leading-[1.6] text-slate-800 shadow-xs ring-1 ring-emerald-900/5">
+                <p className="whitespace-pre-line break-words">
+                  {renderTelegramPreviewText(draft, format)}
+                </p>
+                <div className="mt-2 flex items-center justify-end gap-1 text-[10px] text-emerald-700/80 tabular-nums">
                   <span>{nowTime}</span>
                   <CheckCheck className="h-3.5 w-3.5 text-[#229ED9]" />
                 </div>
