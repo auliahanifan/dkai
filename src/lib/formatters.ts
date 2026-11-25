@@ -13,6 +13,12 @@ const MONTHS_ID = [
   'Des',
 ];
 
+export function formatMonthKey(monthKey: string): string {
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) return monthKey;
+  const [y, m] = monthKey.split('-').map(Number);
+  return `${MONTHS_ID[m - 1] ?? m} ${y}`;
+}
+
 export function formatIdrFull(value: number): string {
   const abs = Math.abs(Math.round(value));
   const formatted = abs.toLocaleString('id-ID');
@@ -51,6 +57,13 @@ export function formatNumber(value: number): string {
   return Math.round(value).toLocaleString('id-ID');
 }
 
+export function formatDecimal(value: number, digits = 1): string {
+  return value.toLocaleString('id-ID', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
 export function formatPct(value: number, digits = 1): string {
   return `${value.toLocaleString('id-ID', {
     minimumFractionDigits: digits,
@@ -58,10 +71,21 @@ export function formatPct(value: number, digits = 1): string {
   })}%`;
 }
 
+export function formatSignedPct(value: number, digits = 1): string {
+  const prefix = value > 0 ? '+' : '';
+  return `${prefix}${formatPct(value, digits)}`;
+}
+
 export function formatDateShort(isoDate: string): string {
   if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return isoDate || '-';
   const [y, m, d] = isoDate.split('-').map(Number);
   return `${d} ${MONTHS_ID[m - 1] ?? m} ${y}`;
+}
+
+export function formatDateDayMonth(isoDate: string): string {
+  if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return isoDate || '-';
+  const [, m, d] = isoDate.split('-').map(Number);
+  return `${d} ${MONTHS_ID[m - 1] ?? m}`;
 }
 
 export function formatDateRange(startIso: string, endIso: string): string {

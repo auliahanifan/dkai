@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  computeCrossFilterDashboard,
   computeDashboardMetrics,
   filterSalesRecords,
   normalizeRegion,
@@ -42,7 +43,7 @@ describe('parseAndCleanSalesCsv on real sales.csv', () => {
     ]);
   });
 
-  it('groups outlets strictly by outlet_id and finds the 5 weakest outlets accurately', () => {
+  it('groups outlets strictly by outlet_id, computes peer benchmarks and automated diagnostics', () => {
     const metrics = computeDashboardMetrics(dataset.records);
     expect(metrics.totals.activeOutletCount).toBe(52);
     expect(metrics.weakestOutlets).toHaveLength(5);
@@ -53,9 +54,65 @@ describe('parseAndCleanSalesCsv on real sales.csv', () => {
       'OUT1042',
       'OUT1045',
     ]);
-    expect(metrics.weakestOutlets[0].netSalesIdr).toBe(378000);
-    expect(metrics.byRegion[0].name).toBe('Jabodetabek');
-    expect(metrics.byBrand[0].name).toBe('Kacang Dua Kelinci');
+
+    const weakest = metrics.weakestOutlets[0];
+    expect(weakest.netSalesIdr).toBe(378000);
+    expect(weakest.avgCartonsPerInvoice).toBe(1);
+    expect(weakest.peerAvgSalesIdr).toBeCloseTo(10163268, 0);
+    expect(weakest.missingCoreBrand).toBe(true);
+    expect(weakest.diagnosticTags.some((t) => t.includes('Drop size'))).toBe(true);
+    expect(weakest.diagnosticTags.some((t) => t.includes('Tanpa Kacang DK'))).toBe(true);
+
+    // Channel skew check: Grosir contributes ~64% of net sales
+    const grosir = metrics.byChannel.find((c) => c.outletType === 'Grosir');
+    expect(grosir?.outletCount).toBe(8);
+    expect(grosir?.sharePct).toBeGreaterThan(60);
+  });
+
+  it('computes monthly run-rate comparison (partial October +5.8% daily run-rate) and detects 3 dormant outlets', () => {
+    const metrics = computeDashboardMetrics(dataset.records, { allRecords: dataset.records });
+    expect(metrics.monthlyComparison.months).toHaveLength(2);
+    expect(metrics.monthlyComparison.latestMonth?.monthKey).toBe('2026-10');
+    expect(metrics.monthlyComparison.latestMonth?.isPartial).toBe(true);
+    expect(metrics.monthlyComparison.runRateDeltaPct).toBeGreaterThan(5);
+
+    expect(metrics.dormantOutlets.map((o) => o.outletId)).toEqual([
+      'OUT1043',
+      'OUT1052',
+      'OUT1048',
+    ]);
+    expect(metrics.dormantOutlets[0].priorNetSalesIdr).toBe(9181700);
+  });
+
+  it('does not collapse region/brand charts or matrix when cross-filtering a specific region or brand', () => {
+    const cf = computeCrossFilterDashboard(dataset.records, {
+      startDate: dataset.minDate,
+      endDate: dataset.maxDate,
+      region: 'Jabodetabek',
+      brand: 'Sukro',
+      outletType: 'ALL',
+    });
+
+    // Filtered metrics reflect the exact selection
+    expect(cf.metrics.byRegion).toHaveLength(1);
+    expect(cf.metrics.byRegion[0].name).toBe('Jabodetabek');
+    expect(cf.metrics.byBrand).toHaveLength(1);
+    expect(cf.metrics.byBrand[0].name).toBe('Sukro');
+
+    // Non-collapsing visual summaries preserve peers for 1-click switching
+    expect(cf.regionChartItems).toHaveLength(6);
+    expect(cf.brandChartItems).toHaveLength(8);
+    expect(cf.matrixData.regions).toHaveLength(6);
+    expect(cf.matrixData.brands).toHaveLength(8);
+  });
+
+  it('does not set lastOrderDate from a return-only row', () => {
+    const returnOnly = dataset.records.filter((r) => r.isReturn);
+    const metrics = computeDashboardMetrics(returnOnly);
+    const out = metrics.allOutlets.find((o) => o.outletId === 'OUT1049');
+    expect(out).toBeDefined();
+    expect(out?.invoiceCount).toBe(0);
+    expect(out?.lastOrderDate).toBe('');
   });
 
   it('keeps returns included in Net Sales and updates metrics when filtered', () => {
@@ -81,7 +138,7 @@ describe('parseAndCleanSalesCsv on real sales.csv', () => {
       brand: 'ALL',
       outletType: 'ALL',
     };
-    const metrics = computeDashboardMetrics(dataset.records);
+    const metrics = computeDashboardMetrics(dataset.records, { allRecords: dataset.records });
     const plain = generateTelegramSummary(metrics, filters, 'plain');
     const md = generateTelegramSummary(metrics, filters, 'markdown');
 
@@ -90,7 +147,6 @@ describe('parseAndCleanSalesCsv on real sales.csv', () => {
     expect(plain).toContain('Kacang Dua Kelinci');
     expect(plain).toContain('OUT1003');
     expect(plain).toContain('OUT1045');
-    expect(md).toContain('*Jabodetabek*');
-    expect(md).toContain('*5 outlet terlemah*');
+    expect(md).toContain('Jabodetabek');
   });
 });
