@@ -130,7 +130,7 @@ describe('parseAndCleanSalesCsv on real sales.csv', () => {
     expect(metrics.byRegion[0].name).toBe('Kalimantan');
   });
 
-  it('generates a single-paragraph Telegram summary in both plain and markdown formats', () => {
+  it('generates a single-paragraph Telegram summary using native Telegram **bold** syntax and tone presets', () => {
     const filters = {
       startDate: dataset.minDate,
       endDate: dataset.maxDate,
@@ -139,14 +139,28 @@ describe('parseAndCleanSalesCsv on real sales.csv', () => {
       outletType: 'ALL',
     };
     const metrics = computeDashboardMetrics(dataset.records, { allRecords: dataset.records });
-    const plain = generateTelegramSummary(metrics, filters, 'plain');
-    const md = generateTelegramSummary(metrics, filters, 'markdown');
+    const plain = generateTelegramSummary(metrics, filters, 'plain', 'executive');
+    const mdExec = generateTelegramSummary(metrics, filters, 'markdown', 'executive');
+    const mdOps = generateTelegramSummary(metrics, filters, 'markdown', 'operational');
 
     expect(plain).not.toContain('\n');
+    expect(mdExec).not.toContain('\n');
+    expect(mdOps).not.toContain('\n');
+
     expect(plain).toContain('Jabodetabek');
     expect(plain).toContain('Kacang Dua Kelinci');
     expect(plain).toContain('OUT1003');
     expect(plain).toContain('OUT1045');
-    expect(md).toContain('Jabodetabek');
+    expect(plain).toContain('1,0 karton/invoice');
+
+    // Native Telegram bold uses **text**, never single *text*
+    expect(mdExec).toContain('**Jabodetabek**');
+    expect(mdExec).toContain('**5 outlet terlemah**');
+    expect(mdExec.replace(/\*\*[^*]+\*\*/g, '')).not.toContain('*');
+
+    // Operational tone adds salesman and dormant outlet context
+    expect(mdOps).toContain('Andi');
+    expect(mdOps).toContain('3 outlet dormant');
+    expect(mdOps).toContain('OUT1043');
   });
 });
