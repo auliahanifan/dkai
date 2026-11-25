@@ -18,9 +18,23 @@ import type { DashboardMetrics } from '../lib/salesAnalytics';
 
 interface KpiStripProps {
   metrics: DashboardMetrics;
+  selectedRegion: string;
+  selectedBrand: string;
+  selectedChannel: string;
+  onSelectRegion: (region: string) => void;
+  onSelectBrand: (brand: string) => void;
+  onSelectChannel: (channel: string) => void;
 }
 
-export function KpiStrip({ metrics }: KpiStripProps) {
+export function KpiStrip({
+  metrics,
+  selectedRegion,
+  selectedBrand,
+  selectedChannel,
+  onSelectRegion,
+  onSelectBrand,
+  onSelectChannel,
+}: KpiStripProps) {
   const { totals, byRegion, byBrand, byChannel, monthlyComparison } = metrics;
   const topRegion = byRegion[0];
   const topBrand = byBrand[0];
@@ -28,6 +42,10 @@ export function KpiStrip({ metrics }: KpiStripProps) {
 
   const { latestMonth, prevMonth, runRateDeltaPct } = monthlyComparison;
   const isRunRateUp = runRateDeltaPct !== null && runRateDeltaPct >= 0;
+
+  const isTopRegionActive = Boolean(topRegion && selectedRegion === topRegion.name);
+  const isTopBrandActive = Boolean(topBrand && selectedBrand === topBrand.name);
+  const isTopChannelActive = Boolean(topChannel && selectedChannel === topChannel.outletType);
 
   return (
     <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -48,16 +66,14 @@ export function KpiStrip({ metrics }: KpiStripProps) {
           {runRateDeltaPct !== null && latestMonth && prevMonth && (
             <span
               title={`Run-rate harian ${latestMonth.label} (${formatIdrCompact(latestMonth.dailyRunRateIdr)}/hari) vs ${prevMonth.label} (${formatIdrCompact(prevMonth.dailyRunRateIdr)}/hari)`}
-              className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${
-                isRunRateUp
-                  ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-inset ring-emerald-400/30'
-                  : 'bg-rose-500/20 text-rose-300 ring-1 ring-inset ring-rose-400/30'
+              className={`inline-flex items-center gap-0.5 text-xs font-bold tabular-nums ${
+                isRunRateUp ? 'text-emerald-300' : 'text-rose-300'
               }`}
             >
               {isRunRateUp ? (
-                <ArrowUpRight className="h-3 w-3" />
+                <ArrowUpRight className="h-3.5 w-3.5" />
               ) : (
-                <ArrowDownRight className="h-3 w-3" />
+                <ArrowDownRight className="h-3.5 w-3.5" />
               )}
               {formatSignedPct(runRateDeltaPct)}/hari
             </span>
@@ -83,8 +99,24 @@ export function KpiStrip({ metrics }: KpiStripProps) {
         </div>
       </div>
 
-      {/* Volume, Drop Size & Channel Concentration */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+      {/* Volume, Drop Size & Channel Concentration (Clickable top channel) */}
+      <button
+        type="button"
+        disabled={!topChannel}
+        onClick={() =>
+          topChannel && onSelectChannel(isTopChannelActive ? 'ALL' : topChannel.outletType)
+        }
+        title={
+          topChannel
+            ? `Klik untuk ${isTopChannelActive ? 'reset filter' : `filter kanal ${topChannel.outletType}`}`
+            : undefined
+        }
+        className={`rounded-2xl border p-5 text-left shadow-xs transition ${
+          isTopChannelActive
+            ? 'border-slate-900 bg-slate-50 ring-1 ring-slate-900/10'
+            : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/40'
+        }`}
+      >
         <div className="flex items-center justify-between text-[11px] font-bold tracking-wider text-slate-500 uppercase">
           <span>Volume &amp; Kanal</span>
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
@@ -106,7 +138,7 @@ export function KpiStrip({ metrics }: KpiStripProps) {
                 Dominan: <strong className="text-slate-900">{topChannel.outletType}</strong> (
                 {topChannel.outletCount} outlet)
               </span>
-              <span className="ml-2 shrink-0 rounded-full bg-slate-100 px-2 py-0.5 font-bold text-slate-800">
+              <span className="ml-2 shrink-0 font-extrabold text-slate-900">
                 {formatPct(topChannel.sharePct, 0)}
               </span>
             </>
@@ -114,10 +146,24 @@ export function KpiStrip({ metrics }: KpiStripProps) {
             <span>Tidak ada data kanal</span>
           )}
         </div>
-      </div>
+      </button>
 
-      {/* Region Terkuat */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+      {/* Region Terkuat (Clickable shortcut to filter top region) */}
+      <button
+        type="button"
+        disabled={!topRegion}
+        onClick={() => topRegion && onSelectRegion(isTopRegionActive ? 'ALL' : topRegion.name)}
+        title={
+          topRegion
+            ? `Klik untuk ${isTopRegionActive ? 'reset filter' : `filter region ${topRegion.name}`}`
+            : undefined
+        }
+        className={`rounded-2xl border p-5 text-left shadow-xs transition ${
+          isTopRegionActive
+            ? 'border-teal-600 bg-teal-50/40 ring-1 ring-teal-600/20'
+            : 'border-slate-200/90 bg-white hover:border-teal-300 hover:bg-teal-50/20'
+        }`}
+      >
         <div className="flex items-center justify-between text-[11px] font-bold tracking-wider text-slate-500 uppercase">
           <span>Region #1</span>
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
@@ -133,15 +179,29 @@ export function KpiStrip({ metrics }: KpiStripProps) {
         <div className="mt-3.5 flex items-center justify-between border-t border-slate-100 pt-2.5 text-[11px] text-slate-600 tabular-nums">
           <span>{topRegion ? `${formatNumber(topRegion.qtyCarton)} ktn` : '-'}</span>
           {topRegion && (
-            <span className="rounded-full bg-teal-50 px-2 py-0.5 font-bold text-teal-800">
-              {formatPct(topRegion.sharePct)}
+            <span className="font-extrabold text-teal-800">
+              {formatPct(topRegion.sharePct)} share
             </span>
           )}
         </div>
-      </div>
+      </button>
 
-      {/* Brand Terkuat */}
-      <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs">
+      {/* Brand Terkuat (Clickable shortcut to filter top brand) */}
+      <button
+        type="button"
+        disabled={!topBrand}
+        onClick={() => topBrand && onSelectBrand(isTopBrandActive ? 'ALL' : topBrand.name)}
+        title={
+          topBrand
+            ? `Klik untuk ${isTopBrandActive ? 'reset filter' : `filter brand ${topBrand.name}`}`
+            : undefined
+        }
+        className={`rounded-2xl border p-5 text-left shadow-xs transition ${
+          isTopBrandActive
+            ? 'border-amber-600 bg-amber-50/40 ring-1 ring-amber-600/20'
+            : 'border-slate-200/90 bg-white hover:border-amber-300 hover:bg-amber-50/20'
+        }`}
+      >
         <div className="flex items-center justify-between text-[11px] font-bold tracking-wider text-slate-500 uppercase">
           <span>Brand Terkuat</span>
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
@@ -161,12 +221,12 @@ export function KpiStrip({ metrics }: KpiStripProps) {
               : '-'}
           </span>
           {topBrand && (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 font-bold text-amber-800">
-              {formatPct(topBrand.sharePct)}
+            <span className="font-extrabold text-amber-800">
+              {formatPct(topBrand.sharePct)} share
             </span>
           )}
         </div>
-      </div>
+      </button>
     </section>
   );
 }

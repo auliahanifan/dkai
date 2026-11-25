@@ -41,7 +41,7 @@ export function WeakestOutletsCard({
   return (
     <section
       id="weakest-outlets"
-      className="overflow-hidden rounded-2xl border border-rose-200/90 bg-white shadow-xs"
+      className="scroll-mt-20 overflow-hidden rounded-2xl border border-rose-200/90 bg-white shadow-xs"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-rose-100 bg-rose-50/70 px-5 py-4">
         <div className="flex items-start gap-3">
@@ -51,21 +51,21 @@ export function WeakestOutletsCard({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base font-bold text-slate-900">5 Outlet Terlemah</h2>
-              <span className="rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-800">
-                Prioritas Follow-up
+              <span className="text-[11px] font-bold tracking-wide text-rose-700 uppercase">
+                · Prioritas Follow-up
               </span>
             </div>
             <p className="mt-0.5 text-xs text-slate-600">
               Diurutkan berdasarkan Net Sales IDR terendah dari {formatNumber(totalActiveOutlets)}{' '}
               outlet aktif (per <code className="font-mono text-[11px] text-slate-700">outlet_id</code>
-              ), dibandingkan terhadap <strong className="font-semibold text-slate-800">rata-rata peer tipe outlet yang sama</strong>. Klik baris untuk diagnosis &amp; riwayat invoice.
+              ), dibandingkan terhadap{' '}
+              <strong className="font-semibold text-slate-800">
+                rata-rata peer tipe outlet yang sama
+              </strong>
+              . Pilih baris mana saja untuk membuka diagnosis &amp; riwayat invoice.
             </p>
           </div>
         </div>
-
-        <span className="shrink-0 rounded-full border border-rose-200/80 bg-white px-3 py-1 text-[11px] font-bold text-rose-800">
-          Klik outlet untuk detail →
-        </span>
       </div>
 
       {outlets.length === 0 ? (
@@ -150,7 +150,7 @@ export function WeakestOutletsCard({
                     </td>
 
                     <td className="px-3 py-3.5 align-middle">
-                      <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200/70">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
                         <UserCheck className="h-3.5 w-3.5 text-slate-400" />
                         <span>{outlet.primarySalesman}</span>
                       </div>
@@ -198,8 +198,9 @@ export function WeakestOutletsCard({
                     </td>
 
                     <td className="py-3.5 pr-4 pl-2 text-right align-middle">
-                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition group-hover:bg-rose-100 group-hover:text-rose-700">
-                        <ChevronRight className="h-4 w-4" />
+                      <span className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-500 transition group-hover:bg-rose-100 group-hover:text-rose-800">
+                        <span>Detail</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
                       </span>
                     </td>
                   </tr>

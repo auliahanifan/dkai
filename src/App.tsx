@@ -282,8 +282,8 @@ export function App() {
                   Dua Kelinci Commercial Cockpit
                 </h1>
                 {dataset && (
-                  <span className="hidden rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 sm:inline-block tabular-nums">
-                    {formatDateRange(dataset.minDate, dataset.maxDate)}
+                  <span className="hidden text-[11px] font-medium text-slate-400 sm:inline-block tabular-nums">
+                    · {formatDateRange(dataset.minDate, dataset.maxDate)}
                   </span>
                 )}
               </div>
@@ -543,7 +543,15 @@ export function App() {
             </section>
 
             {/* Executive KPI Strip */}
-            <KpiStrip metrics={metrics} />
+            <KpiStrip
+              metrics={metrics}
+              selectedRegion={filters.region}
+              selectedBrand={filters.brand}
+              selectedChannel={filters.outletType}
+              onSelectRegion={(region) => setFilters((f) => ({ ...f, region }))}
+              onSelectBrand={(brand) => setFilters((f) => ({ ...f, brand }))}
+              onSelectChannel={(outletType) => setFilters((f) => ({ ...f, outletType }))}
+            />
 
             {/* Elevated 1-Paragraph Telegram Executive Brief (Immediately Accessible) */}
             <TelegramSummaryCard metrics={metrics} filters={filters} />
@@ -551,8 +559,16 @@ export function App() {
             {/* Sales Trend, Partial-Month Run-Rate & Channel Composition */}
             <SalesTrendCard
               metrics={metrics}
+              channelItems={crossFilter.channelChartItems}
               selectedChannel={filters.outletType}
               onSelectChannel={(outletType) => setFilters((f) => ({ ...f, outletType }))}
+              activeStartDate={filters.startDate}
+              activeEndDate={filters.endDate}
+              fullMinDate={dataset.minDate}
+              fullMaxDate={dataset.maxDate}
+              onSelectDateRange={(startDate, endDate) =>
+                setFilters((f) => ({ ...f, startDate, endDate }))
+              }
             />
 
             {/* Region & Brand Charts (Non-Collapsing Cross-Filter) */}

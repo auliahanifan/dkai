@@ -10,6 +10,13 @@
     background-color: #f6f5f0;
     color: #0f172a;
   }
+
+  button:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  [role='button'] {
+    cursor: pointer;
+  }
 }
 
 .tabular-nums {

@@ -9,12 +9,18 @@ import {
   formatPct,
   formatSignedPct,
 } from '../lib/formatters';
-import type { DashboardMetrics } from '../lib/salesAnalytics';
+import type { ChannelSummary, DashboardMetrics } from '../lib/salesAnalytics';
 
 interface SalesTrendCardProps {
   metrics: DashboardMetrics;
+  channelItems: ChannelSummary[];
   selectedChannel: string;
   onSelectChannel: (channel: string) => void;
+  activeStartDate: string;
+  activeEndDate: string;
+  fullMinDate: string;
+  fullMaxDate: string;
+  onSelectDateRange: (startDate: string, endDate: string) => void;
 }
 
 type Granularity = 'daily' | 'weekly';
@@ -28,17 +34,25 @@ const CHANNEL_COLORS: Record<string, string> = {
 
 export function SalesTrendCard({
   metrics,
+  channelItems,
   selectedChannel,
   onSelectChannel,
+  activeStartDate,
+  activeEndDate,
+  fullMinDate,
+  fullMaxDate,
+  onSelectDateRange,
 }: SalesTrendCardProps) {
   const [granularity, setGranularity] = useState<Granularity>('daily');
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  const { dailyTrend, weeklyTrend, monthlyComparison, byChannel } = metrics;
+  const { dailyTrend, weeklyTrend, monthlyComparison } = metrics;
   const items =
     granularity === 'daily'
       ? dailyTrend.map((d) => ({
           key: d.date,
+          startDate: d.date,
+          endDate: d.date,
           label: formatDateDayMonth(d.date),
           tooltipTitle: formatDateShort(d.date),
           monthKey: d.monthKey,
@@ -49,6 +63,8 @@ export function SalesTrendCard({
         }))
       : weeklyTrend.map((w) => ({
           key: w.weekStart,
+          startDate: w.weekStart,
+          endDate: w.weekEnd,
           label: w.label,
           tooltipTitle: `Minggu ${w.label}`,
           monthKey: w.monthKey,
@@ -98,14 +114,15 @@ export function SalesTrendCard({
                 Tren Penjualan &amp; Run-Rate Harian
               </h2>
               {latestMonth?.isPartial && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800 ring-1 ring-inset ring-amber-200/80">
-                  <Info className="h-3 w-3" />
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700">
+                  <Info className="h-3.5 w-3.5" />
                   {latestMonth.label} parsial s.d. tgl {latestMonth.maxDayOfMonth}
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500">
-              Pola transaksi sepanjang periode beserta perbandingan kecepatan jual harian antar bulan.
+              Pola transaksi sepanjang periode beserta perbandingan kecepatan jual harian antar
+              bulan · Klik batang untuk fokus periode.
             </p>
           </div>
         </div>
@@ -236,7 +253,7 @@ export function SalesTrendCard({
                   </span>
                 </span>
               ) : (
-                <span className="text-slate-400">Arahkan kursor ke batang untuk detail</span>
+                <span className="text-slate-400">Arahkan kursor atau klik batang untuk filter</span>
               )}
             </div>
           </div>
@@ -305,11 +322,32 @@ export function SalesTrendCard({
                 const labelStep = granularity === 'weekly' ? 1 : Math.max(1, Math.ceil(items.length / 8));
                 const showLabel = idx % labelStep === 0 || idx === items.length - 1;
 
+                const isExactSelected =
+                  activeStartDate === item.startDate && activeEndDate === item.endDate;
+
                 return (
                   <g
                     key={item.key}
-                    className="cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Filter periode ${item.tooltipTitle}`}
+                    className="cursor-pointer outline-none"
                     onMouseEnter={() => setHoveredIdx(idx)}
+                    onClick={() =>
+                      isExactSelected
+                        ? onSelectDateRange(fullMinDate, fullMaxDate)
+                        : onSelectDateRange(item.startDate, item.endDate)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        if (isExactSelected) {
+                          onSelectDateRange(fullMinDate, fullMaxDate);
+                        } else {
+                          onSelectDateRange(item.startDate, item.endDate);
+                        }
+                      }
+                    }}
                   >
                     {/* Invisible full-slot hover target */}
                     <rect
@@ -374,12 +412,12 @@ export function SalesTrendCard({
       )}
 
       {/* Channel Concentration Strip (Explains Grosir Skew Directly) */}
-      {byChannel.length > 0 && (
+      {channelItems.length > 0 && (
         <div className="mt-4 border-t border-slate-100 pt-3.5">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
             <span className="font-bold text-slate-700">
               Komposisi Kanal Outlet{' '}
-              <span className="font-normal text-slate-400">(klik kanal untuk filter)</span>
+              <span className="font-normal text-slate-400">(pilih kanal untuk filter)</span>
             </span>
             <span className="text-slate-500">
               Rata-rata per outlet sangat berbeda antar kanal — gunakan perbandingan peer di tabel
@@ -388,7 +426,7 @@ export function SalesTrendCard({
           </div>
 
           <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-            {byChannel.map((ch) => (
+            {channelItems.map((ch) => (
               <button
                 key={ch.outletType}
                 type="button"
@@ -405,8 +443,9 @@ export function SalesTrendCard({
           </div>
 
           <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {byChannel.map((ch) => {
+            {channelItems.map((ch) => {
               const isSelected = selectedChannel === ch.outletType;
+              const isDimmed = selectedChannel !== 'ALL' && !isSelected;
               return (
                 <button
                   key={ch.outletType}
@@ -416,7 +455,7 @@ export function SalesTrendCard({
                     isSelected
                       ? 'border-slate-900 bg-slate-900/5'
                       : 'border-slate-200/70 bg-slate-50/50 hover:border-slate-300'
-                  }`}
+                  } ${isDimmed ? 'opacity-50 hover:opacity-90' : ''}`}
                 >
                   <div className="flex min-w-0 items-center gap-1.5">
                     <span

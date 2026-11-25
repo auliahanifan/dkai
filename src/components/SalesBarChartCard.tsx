@@ -34,9 +34,9 @@ export function SalesBarChartCard({
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-slate-900">{title}</h2>
-          <p className="text-xs text-slate-500">{subtitle}</p>
+          <p className="text-xs text-slate-500">{subtitle} · Pilih baris untuk memfilter.</p>
         </div>
-        {selectedName !== 'ALL' ? (
+        {selectedName !== 'ALL' && (
           <button
             type="button"
             onClick={() => onSelect('ALL')}
@@ -45,10 +45,6 @@ export function SalesBarChartCard({
             <RotateCcw className="h-3 w-3" />
             Semua
           </button>
-        ) : (
-          <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-            Klik bar untuk filter
-          </span>
         )}
       </div>
 

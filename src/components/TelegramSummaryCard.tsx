@@ -73,7 +73,7 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
   return (
     <section
       id="telegram-summary"
-      className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs"
+      className="scroll-mt-20 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs"
     >
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/60 px-5 py-3.5">
         <div className="flex items-center gap-3">
@@ -81,20 +81,15 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
             <Send className="h-4 w-4" />
           </div>
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm font-extrabold tracking-tight text-slate-900 sm:text-base">
-                Ringkasan 1 Paragraf untuk Telegram
-              </h2>
-              <span className="rounded-full bg-sky-100/90 px-2 py-0.5 text-[10px] font-bold text-sky-800">
-                Siap Kirim Sales Manager
-              </span>
-            </div>
+            <h2 className="text-sm font-extrabold tracking-tight text-slate-900 sm:text-base">
+              Ringkasan 1 Paragraf untuk Telegram
+            </h2>
             <p className="text-xs text-slate-500">
-              Diperbarui otomatis mengikuti filter aktif — menggunakan sintaks{' '}
+              Siap kirim ke Sales Manager · otomatis sinkron filter aktif dengan format{' '}
               <code className="rounded bg-slate-200/70 px-1 py-0.5 font-mono text-[10px] text-slate-700">
                 **bold**
               </code>{' '}
-              native klien Telegram.
+              klien Telegram.
             </p>
           </div>
         </div>
@@ -204,14 +199,14 @@ export function TelegramSummaryCard({ metrics, filters }: TelegramSummaryCardPro
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2.5 text-[11px] text-slate-500 tabular-nums">
+            <div className="flex items-center gap-2.5 text-[11px] tabular-nums">
               <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                className={`font-semibold ${
                   charCount <= 520
-                    ? 'bg-emerald-50 text-emerald-700'
+                    ? 'text-emerald-700'
                     : charCount <= 750
-                      ? 'bg-amber-50 text-amber-700'
-                      : 'bg-rose-50 text-rose-700'
+                      ? 'text-amber-700'
+                      : 'text-rose-700'
                 }`}
               >
                 {charCount} kar · {readabilityLabel}

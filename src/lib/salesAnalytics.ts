@@ -233,6 +233,7 @@ export interface CrossFilterDashboard {
   metrics: DashboardMetrics;
   regionChartItems: DimensionSummary[];
   brandChartItems: DimensionSummary[];
+  channelChartItems: ChannelSummary[];
   matrixData: RegionBrandMatrix;
 }
 
@@ -1337,16 +1338,20 @@ export function computeCrossFilterDashboard(
 
   const regionChartRecords = filterSalesRecords(allRecords, { ...filters, region: 'ALL' });
   const brandChartRecords = filterSalesRecords(allRecords, { ...filters, brand: 'ALL' });
+  const channelChartRecords = filterSalesRecords(allRecords, { ...filters, outletType: 'ALL' });
   const matrixRecords = filterSalesRecords(allRecords, {
     ...filters,
     region: 'ALL',
     brand: 'ALL',
   });
 
+  const channelMetrics = computeDashboardMetrics(channelChartRecords, { coreBrandName });
+
   return {
     metrics,
     regionChartItems: buildDimensionSummaries(regionChartRecords, 'region'),
     brandChartItems: buildDimensionSummaries(brandChartRecords, 'brand'),
+    channelChartItems: channelMetrics.byChannel,
     matrixData: buildMatrixFromRecords(matrixRecords),
   };
 }

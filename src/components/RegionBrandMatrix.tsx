@@ -340,9 +340,11 @@ export function RegionBrandMatrix({
           <button
             type="button"
             onClick={() => onSelectCell(lowestCombo.region, lowestCombo.brand)}
-            className="shrink-0 font-bold text-teal-800 hover:underline"
+            className="shrink-0 rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-teal-800 ring-1 ring-inset ring-teal-300/80 transition hover:bg-teal-100"
           >
-            Inspeksi kombinasi →
+            {selectedRegion === lowestCombo.region && selectedBrand === lowestCombo.brand
+              ? 'Tampilkan semua'
+              : 'Inspeksi kombinasi →'}
           </button>
         </div>
       )}
