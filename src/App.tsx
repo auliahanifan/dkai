@@ -14,6 +14,7 @@ import { DataQualityModal } from './components/DataQualityModal';
 import { KpiStrip } from './components/KpiStrip';
 import { RegionBrandMatrix } from './components/RegionBrandMatrix';
 import { SalesBarChartCard } from './components/SalesBarChartCard';
+import { SalesTrendCard } from './components/SalesTrendCard';
 import { TelegramSummaryCard } from './components/TelegramSummaryCard';
 import { WeakestOutletsCard } from './components/WeakestOutletsCard';
 import { formatDateRange, formatMonthKey, formatNumber } from './lib/formatters';
@@ -533,6 +534,13 @@ export function App() {
 
             {/* Elevated 1-Paragraph Telegram Executive Brief (Immediately Accessible) */}
             <TelegramSummaryCard metrics={metrics} filters={filters} />
+
+            {/* Sales Trend, Partial-Month Run-Rate & Channel Composition */}
+            <SalesTrendCard
+              metrics={metrics}
+              selectedChannel={filters.outletType}
+              onSelectChannel={(outletType) => setFilters((f) => ({ ...f, outletType }))}
+            />
 
             {/* Region & Brand Charts */}
             <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
